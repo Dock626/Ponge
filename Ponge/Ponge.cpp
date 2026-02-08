@@ -18,6 +18,7 @@ private:
 	int Rect_Width_;
 
 public:
+	bool is_moving_ = false;
     Player(Vector2 Pos, int Game_Screen_Height, int Width, int Height) {
         Position_ = Pos;
 		Current_Speed_ = Speed_;
@@ -33,9 +34,28 @@ public:
     void Update() {
         if (IsKeyDown(KEY_LEFT_SHIFT)) Current_Speed_ = Speed_ * 4;
         else Current_Speed_ = Speed_;
-        if (IsKeyDown(KEY_UP) and Position_.y >= 0) Position_.y -= Current_Speed_;
+        if (IsKeyDown(KEY_UP) and Position_.y >= 0) {
+            Position_.y -= Current_Speed_;
+			is_moving_ = true;
+        } else is_moving_ = false;
         if (IsKeyDown(KEY_DOWN) and Position_.y <= Screen_Height_ - Rect_Height_) Position_.y += Current_Speed_;
     }
+    Vector2 GetPosition() {
+        return Position_;
+    }
+
+    float GetSpeed() {
+        return Current_Speed_;
+	}
+
+    Rectangle GetRec() {
+        Rectangle rec;
+        rec.x = Position_.x;
+        rec.y = Position_.y;
+        rec.width = Rect_Width_;
+        rec.height = Rect_Height_;
+        return rec;
+	}
 };
 
 class Ball {
@@ -76,15 +96,24 @@ public:
         }
         else {
             Position_.y -= Current_Speed_.y;
-		}
-		if (Position_.x <= Radius_) Moving_Right_ = true;
-		if (Position_.x >= ScreenWidth - Radius_) Moving_Right_ = false;
-		if (Position_.y <= Radius_) Moving_Down_ = true;
-		if (Position_.y >= ScreenHeight - Radius_) Moving_Down_ = false;
-		cout << Position_.x << "\n";
-    }
+        }
+        if (Position_.x <= Radius_) Moving_Right_ = true;
+        if (Position_.x >= ScreenWidth - Radius_) Moving_Right_ = false;
+        if (Position_.y <= Radius_) Moving_Down_ = true;
+        if (Position_.y >= ScreenHeight - Radius_) Moving_Down_ = false;
+        cout << Position_.x << "\n";
+    };
+    void AddSpeed(float Player_Speed) {
+        Current_Speed_.x += Player_Speed;
+        Current_Speed_.y += Player_Speed;
+	}
+    Vector2 GetPosition() {
+        return Position_;
+	}
+    int GetRadius() {
+        return Radius_;
+	}
 };
-
 
 int main()
 {
@@ -103,6 +132,10 @@ int main()
 		// Update
         if (IsKeyPressed(KEY_P)) paused = !paused;
         if (!paused) {
+            if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Player.GetRec())) {
+                Ball.SetDirection();
+				if (Player.is_moving_) Ball.AddSpeed(Player.GetSpeed());
+            }
             Player.Update();
             Ball.Update();
         }
