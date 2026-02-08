@@ -5,10 +5,13 @@
 
 using namespace std;
 
+const int screenHeight = 700;
+const int screenWidth = 1000;
+
 class Player {
 private:
     Vector2 Position_;
-    float Speed_ = 5.0f;
+    const float Speed_ = 5.0f;
     float Current_Speed_;
     int Screen_Height_;
 	int Rect_Height_;
@@ -31,19 +34,66 @@ public:
         if (IsKeyDown(KEY_LEFT_SHIFT)) Current_Speed_ = Speed_ * 4;
         else Current_Speed_ = Speed_;
         if (IsKeyDown(KEY_UP) and Position_.y >= 0) Position_.y -= Current_Speed_;
-        if (IsKeyDown(KEY_DOWN) and Position_.y <= Screen_Height_ - Rect_Height_) { Position_.y += Current_Speed_; cout << Position_.y << "\n"; };
+        if (IsKeyDown(KEY_DOWN) and Position_.y <= Screen_Height_ - Rect_Height_) Position_.y += Current_Speed_;
     }
 };
 
+class Ball {
+private:
+    Vector2 Position_;
+    const float Speed_ = 5.0f;
+    Vector2 Current_Speed_;
+    int Radius_;
+	bool Moving_Right_ = true;
+	bool Moving_Down_ = true;
+    int ScreenHeight;
+	int ScreenWidth;
+
+public:
+    Ball(Vector2 Pos, int Rad, int GetScreenHeight, int GetScreenWidth) {
+        Position_ = Pos;
+        Current_Speed_.x = Speed_;
+		Current_Speed_.y = Speed_;
+        Radius_ = Rad;
+		ScreenHeight = GetScreenHeight;
+        ScreenWidth = GetScreenWidth;
+    }
+    void SetDirection() {
+		Moving_Right_ = !Moving_Right_;
+    }
+    void Draw() {
+        DrawCircle(Position_.x, Position_.y, Radius_, RED);
+    }
+    void Update() {
+        if (Moving_Right_) {
+            Position_.x += Current_Speed_.x;
+        }
+        else {
+            Position_.x -= Current_Speed_.x;
+        }
+        if (Moving_Down_) {
+            Position_.y += Current_Speed_.y;
+        }
+        else {
+            Position_.y -= Current_Speed_.y;
+		}
+		if (Position_.x <= Radius_) Moving_Right_ = true;
+		if (Position_.x >= ScreenWidth - Radius_) Moving_Right_ = false;
+		if (Position_.y <= Radius_) Moving_Down_ = true;
+		if (Position_.y >= ScreenHeight - Radius_) Moving_Down_ = false;
+		cout << Position_.x << "\n";
+    }
+};
+
+
 int main()
 {
-
+    
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
     bool paused = false;
-    Player Test(Vector2(screenWidth / 2 - 400, screenHeight / 2), screenHeight, 20, 80);
+    Player Player(Vector2(screenWidth / 2 - 450, screenHeight / 2), screenHeight, 20, 80);
+	Ball Ball(Vector2(screenWidth / 2, screenHeight / 2), 10, screenHeight, screenWidth);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - input keys");
     SetTargetFPS(60);
 
@@ -51,13 +101,18 @@ int main()
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
 		// Update
-        Test.Update();
-
+        if (IsKeyPressed(KEY_P)) paused = !paused;
+        if (!paused) {
+            Player.Update();
+            Ball.Update();
+        }
+        
 
 		// Draw
         BeginDrawing();
         ClearBackground(RAYWHITE);
-        Test.Draw();
+        Player.Draw();
+		Ball.Draw();
         EndDrawing();
     }
     return 0;
