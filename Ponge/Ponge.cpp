@@ -94,11 +94,10 @@ public:
         if (Position_.x >= ScreenWidth - Radius_) Moving_Right_ = false;
         if (Position_.y <= Radius_) Moving_Down_ = true;
         if (Position_.y >= ScreenHeight - Radius_) Moving_Down_ = false;
-        cout << Position_.x << "\n";
     }
-    void AddSpeed(float Player_Speed) {
-        Current_Speed_.x += Player_Speed / 4;
-        Current_Speed_.y += Player_Speed / 4;
+    void AddSpeed() {
+        Current_Speed_.x += 0.1f;
+        Current_Speed_.y += 0.1f;
 	}
     Vector2 GetPosition() {
         return Position_;
@@ -109,9 +108,8 @@ public:
 };
 class Enemy {
 private:
-    Vector2 Position_;
     const float Speed_ = 5.0f;
-    Vector2 Current_Speed_;
+    Vector2 Position_;
     int ScreenHeight;
     int ScreenWidth;
     int Rect_Height_;
@@ -124,10 +122,14 @@ public:
         Rect_Height_ = Height;
         Rect_Width_ = Width;
     }
-    void Update(int y) {
-        if (y >= Position_.y) Position_.y += Speed_;
-		else Position_.y -= Speed_;   
-	}
+    void Update(int ballY) {
+        float center = Position_.y + Rect_Height_ / 2;
+
+        if (ballY > center && Position_.y < ScreenHeight - Rect_Height_)
+            Position_.y += Speed_;
+        else if (ballY < center && Position_.y > 0)
+            Position_.y -= Speed_;
+    }
     void Draw() {
         DrawRectangle(Position_.x, Position_.y, Rect_Width_, Rect_Height_, GREEN);
 	}
@@ -160,14 +162,14 @@ int main()
 		// Update
         if (IsKeyPressed(KEY_P)) paused = !paused;
         if (!paused) {
-            if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Player.GetRec())){
+            if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Player.GetRec())) {
                 Ball.SetDirection();
-				if (Player.is_moving_) Ball.AddSpeed(Player.GetSpeed());
-
-            } else if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Enemy.GetRec())){
+				Ball.AddSpeed();
+            }
+            else if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Enemy.GetRec())) {
                 Ball.SetDirection();
-                Ball.AddSpeed(5.0f);
-			}
+				Ball.AddSpeed();
+            }
                 
             Player.Update();
 			Enemy.Update(Ball.GetPosition().y);
