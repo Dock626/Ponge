@@ -32,7 +32,7 @@ public:
     }
 
     void Update() {
-        if (IsKeyDown(KEY_LEFT_SHIFT)) Current_Speed_ = Speed_ * 4;
+        if (IsKeyDown(KEY_LEFT_SHIFT)) Current_Speed_ = Speed_ * 2;
         else Current_Speed_ = Speed_;
         if (IsKeyDown(KEY_UP) and Position_.y >= 0) {
             Position_.y -= Current_Speed_;
@@ -85,27 +85,20 @@ public:
         DrawCircle(Position_.x, Position_.y, Radius_, RED);
     }
     void Update() {
-        if (Moving_Right_) {
-            Position_.x += Current_Speed_.x;
-        }
-        else {
-            Position_.x -= Current_Speed_.x;
-        }
-        if (Moving_Down_) {
-            Position_.y += Current_Speed_.y;
-        }
-        else {
-            Position_.y -= Current_Speed_.y;
-        }
+        if (Moving_Right_) Position_.x += Current_Speed_.x;
+            else Position_.x -= Current_Speed_.x;
+        if (Moving_Down_) Position_.y += Current_Speed_.y;
+            else Position_.y -= Current_Speed_.y;
+
         if (Position_.x <= Radius_) Moving_Right_ = true;
         if (Position_.x >= ScreenWidth - Radius_) Moving_Right_ = false;
         if (Position_.y <= Radius_) Moving_Down_ = true;
         if (Position_.y >= ScreenHeight - Radius_) Moving_Down_ = false;
         cout << Position_.x << "\n";
-    };
+    }
     void AddSpeed(float Player_Speed) {
-        Current_Speed_.x += Player_Speed;
-        Current_Speed_.y += Player_Speed;
+        Current_Speed_.x += Player_Speed / 4;
+        Current_Speed_.y += Player_Speed / 4;
 	}
     Vector2 GetPosition() {
         return Position_;
@@ -114,7 +107,41 @@ public:
         return Radius_;
 	}
 };
+class Enemy {
+private:
+    Vector2 Position_;
+    const float Speed_ = 5.0f;
+    Vector2 Current_Speed_;
+    int ScreenHeight;
+    int ScreenWidth;
+    int Rect_Height_;
+    int Rect_Width_;
+public:
+    Enemy(Vector2 Pos, int Game_Screen_Height, int Game_Screen_Width, int Width, int Height) {
+        Position_ = Pos;
+        ScreenHeight = Game_Screen_Height;
+        ScreenWidth = Game_Screen_Width;
+        Rect_Height_ = Height;
+        Rect_Width_ = Width;
+    }
+    void Update(int y) {
+        if (y >= Position_.y) Position_.y += Speed_;
+		else Position_.y -= Speed_;   
+	}
+    void Draw() {
+        DrawRectangle(Position_.x, Position_.y, Rect_Width_, Rect_Height_, GREEN);
+	}
 
+    Rectangle GetRec() {
+        Rectangle rec;
+        rec.x = Position_.x;
+        rec.y = Position_.y;
+        rec.width = Rect_Width_;
+        rec.height = Rect_Height_;
+        return rec;
+    }
+
+};
 int main()
 {
     
@@ -123,6 +150,7 @@ int main()
     bool paused = false;
     Player Player(Vector2(screenWidth / 2 - 450, screenHeight / 2), screenHeight, 20, 80);
 	Ball Ball(Vector2(screenWidth / 2, screenHeight / 2), 10, screenHeight, screenWidth);
+	Enemy Enemy(Vector2(screenWidth / 2 + 450, screenHeight / 2), screenHeight, screenWidth, 20, 80);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - input keys");
     SetTargetFPS(60);
 
@@ -132,11 +160,17 @@ int main()
 		// Update
         if (IsKeyPressed(KEY_P)) paused = !paused;
         if (!paused) {
-            if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Player.GetRec())) {
+            if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Player.GetRec())){
                 Ball.SetDirection();
 				if (Player.is_moving_) Ball.AddSpeed(Player.GetSpeed());
-            }
+
+            } else if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Enemy.GetRec())){
+                Ball.SetDirection();
+                Ball.AddSpeed(5.0f);
+			}
+                
             Player.Update();
+			Enemy.Update(Ball.GetPosition().y);
             Ball.Update();
         }
         
@@ -145,6 +179,7 @@ int main()
         BeginDrawing();
         ClearBackground(RAYWHITE);
         Player.Draw();
+        Enemy.Draw();
 		Ball.Draw();
         EndDrawing();
     }
