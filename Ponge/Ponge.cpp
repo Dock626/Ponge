@@ -188,7 +188,7 @@ int main() {
     Ball Ball(Vector2(screenWidth / 2, screenHeight / 2), 10, screenHeight, screenWidth);
     Enemy_AI_Type_2 Enemy(Vector2(screenWidth / 2 + 450, screenHeight / 2), screenHeight, screenWidth, 20, 80);
 
-    InitWindow(screenWidth, screenHeight, "Pong with angled reflection");
+    InitWindow(screenWidth, screenHeight, "Pong");
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
