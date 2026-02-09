@@ -66,13 +66,24 @@ private:
     int ScreenWidth;
 
 public:
+    float GetRandomFloat(float min, float max) {
+        return GetRandomValue(0, 1000) / 1000.0f * (max - min) + min;
+    }
     Ball(Vector2 Pos, int Rad, int GetScreenHeight, int GetScreenWidth) {
         Position_ = Pos;
-        Current_Speed_.x = Speed_;
-        Current_Speed_.y = Speed_;
         Radius_ = Rad;
         ScreenHeight = GetScreenHeight;
         ScreenWidth = GetScreenWidth;
+
+        // Pick a random angle (e.g., -45° to 45° for right side or 135° to 225° for left side)
+        float angle = GetRandomFloat(-45.0f, 45.0f) * (PI / 180.0f); // convert degrees to radians
+
+        // Randomly decide left or right initial direction
+        bool startRight = GetRandomValue(0, 1) == 1;
+
+        // Set the initial velocity
+        Current_Speed_.x = Speed_ * cos(angle) * (startRight ? 1 : -1);
+        Current_Speed_.y = Speed_ * sin(angle);
     }
 
     void SetAngle(float angle, bool isRightPaddle) {
@@ -99,7 +110,7 @@ public:
 
 class Enemy {
 protected:
-    const float Speed_ = 5.0f;
+    const float Speed_ = 4.95f;
     Vector2 Position_;
     int ScreenHeight;
     int ScreenWidth;
@@ -143,8 +154,8 @@ public:
         float screenCenter = ScreenHeight / 2;
 
         if (ball.x < ScreenWidth / 2) {
-            if (center > screenCenter + 5) Position_.y -= Speed_ * 0.5f;
-            else if (center < screenCenter - 5) Position_.y += Speed_ * 0.5f;
+            if (center > screenCenter + 5) Position_.y -= Speed_ * 0.8f;
+            else if (center < screenCenter - 5) Position_.y += Speed_ * 0.8f;
         }
         else {
             float moveSpeed = Speed_;
