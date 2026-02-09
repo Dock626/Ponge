@@ -103,7 +103,13 @@ public:
         if (Position_.y <= Radius_) Current_Speed_.y = fabs(Current_Speed_.y);
         if (Position_.y >= ScreenHeight - Radius_) Current_Speed_.y = -fabs(Current_Speed_.y);
     }
-
+    void AddSpeed() {
+        float speed = sqrt(Current_Speed_.x * Current_Speed_.x + Current_Speed_.y * Current_Speed_.y);
+        speed += 0.2f;  // increase by small amount
+        float angle = atan2(Current_Speed_.y, Current_Speed_.x);
+        Current_Speed_.x = speed * cos(angle);
+        Current_Speed_.y = speed * sin(angle);
+    }
     Vector2 GetPosition() { return Position_; }
     int GetRadius() { return Radius_; }
 };
@@ -197,6 +203,7 @@ int main() {
                 float maxAngle = 60 * (PI / 180);
                 float angle = normalizedY * maxAngle;
                 Ball.SetAngle(angle, false);
+                Ball.AddSpeed();
             }
 
             // Enemy collision
@@ -206,7 +213,8 @@ int main() {
                 float normalizedY = relativeY / (Enemy.GetHeight() / 2);
                 float maxAngle = 60 * (PI / 180);
                 float angle = normalizedY * maxAngle;
-                Ball.SetAngle(angle, true); // true → enemy paddle
+                Ball.SetAngle(angle, true);
+                Ball.AddSpeed();
             }
 
             Player.Update();
