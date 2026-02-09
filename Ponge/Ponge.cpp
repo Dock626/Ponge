@@ -2,6 +2,7 @@
 //
 
 #include "Ponge.h"
+#include <cmath>
 
 using namespace std;
 
@@ -14,15 +15,15 @@ private:
     const float Speed_ = 5.0f;
     float Current_Speed_;
     int Screen_Height_;
-	int Rect_Height_;
-	int Rect_Width_;
+    int Rect_Height_;
+    int Rect_Width_;
 
 public:
-	bool is_moving_ = false;
+    bool is_moving_ = false;
     Player(Vector2 Pos, int Game_Screen_Height, int Width, int Height) {
         Position_ = Pos;
-		Current_Speed_ = Speed_;
-		Screen_Height_ = Game_Screen_Height;
+        Current_Speed_ = Speed_;
+        Screen_Height_ = Game_Screen_Height;
         Rect_Height_ = Height;
         Rect_Width_ = Width;
     }
@@ -34,19 +35,15 @@ public:
     void Update() {
         if (IsKeyDown(KEY_LEFT_SHIFT)) Current_Speed_ = Speed_ * 2;
         else Current_Speed_ = Speed_;
-        if (IsKeyDown(KEY_UP) and Position_.y >= 0) {
+        if (IsKeyDown(KEY_UP) && Position_.y >= 0) {
             Position_.y -= Current_Speed_;
-			is_moving_ = true;
-        } else is_moving_ = false;
-        if (IsKeyDown(KEY_DOWN) and Position_.y <= Screen_Height_ - Rect_Height_) Position_.y += Current_Speed_;
+            is_moving_ = true;
+        }
+        else is_moving_ = false;
+        if (IsKeyDown(KEY_DOWN) && Position_.y <= Screen_Height_ - Rect_Height_) Position_.y += Current_Speed_;
     }
-    Vector2 GetPosition() {
-        return Position_;
-    }
-
-    float GetSpeed() {
-        return Current_Speed_;
-	}
+    Vector2 GetPosition() { return Position_; }
+    float GetSpeed() { return Current_Speed_; }
 
     Rectangle GetRec() {
         Rectangle rec;
@@ -55,56 +52,49 @@ public:
         rec.width = Rect_Width_;
         rec.height = Rect_Height_;
         return rec;
-	}
+    }
+    int GetHeight() { return Rect_Height_; }
 };
 
 class Ball {
 private:
     Vector2 Position_;
-    const float Speed_ = 5.0f;
+    float Speed_ = 5.0f;
     Vector2 Current_Speed_;
     int Radius_;
-	bool Moving_Right_ = true;
-	bool Moving_Down_ = true;
     int ScreenHeight;
-	int ScreenWidth;
+    int ScreenWidth;
 
 public:
     Ball(Vector2 Pos, int Rad, int GetScreenHeight, int GetScreenWidth) {
         Position_ = Pos;
         Current_Speed_.x = Speed_;
-		Current_Speed_.y = Speed_;
+        Current_Speed_.y = Speed_;
         Radius_ = Rad;
-		ScreenHeight = GetScreenHeight;
+        ScreenHeight = GetScreenHeight;
         ScreenWidth = GetScreenWidth;
     }
-    void SetDirection() {
-		Moving_Right_ = !Moving_Right_;
-    }
-    void Draw() {
-        DrawCircle(Position_.x, Position_.y, Radius_, RED);
-    }
-    void Update() {
-        if (Moving_Right_) Position_.x += Current_Speed_.x;
-            else Position_.x -= Current_Speed_.x;
-        if (Moving_Down_) Position_.y += Current_Speed_.y;
-            else Position_.y -= Current_Speed_.y;
 
-        if (Position_.x <= Radius_) Moving_Right_ = true;
-        if (Position_.x >= ScreenWidth - Radius_) Moving_Right_ = false;
-        if (Position_.y <= Radius_) Moving_Down_ = true;
-        if (Position_.y >= ScreenHeight - Radius_) Moving_Down_ = false;
+    void SetAngle(float angle, bool isRightPaddle) {
+        float speed = sqrt(Current_Speed_.x * Current_Speed_.x + Current_Speed_.y * Current_Speed_.y);
+        Current_Speed_.x = speed * cos(angle) * (isRightPaddle ? -1 : 1);
+        Current_Speed_.y = speed * sin(angle); 
     }
-    void AddSpeed() {
-        Current_Speed_.x += 0.1f;
-        Current_Speed_.y += 0.1f;
-	}
-    Vector2 GetPosition() {
-        return Position_;
-	}
-    int GetRadius() {
-        return Radius_;
-	}
+
+    void Draw() { DrawCircle(Position_.x, Position_.y, Radius_, RED); }
+
+    void Update() {
+        Position_.x += Current_Speed_.x;
+        Position_.y += Current_Speed_.y;
+
+        if (Position_.x <= Radius_) Current_Speed_.x = fabs(Current_Speed_.x);
+        if (Position_.x >= ScreenWidth - Radius_) Current_Speed_.x = -fabs(Current_Speed_.x);
+        if (Position_.y <= Radius_) Current_Speed_.y = fabs(Current_Speed_.y);
+        if (Position_.y >= ScreenHeight - Radius_) Current_Speed_.y = -fabs(Current_Speed_.y);
+    }
+
+    Vector2 GetPosition() { return Position_; }
+    int GetRadius() { return Radius_; }
 };
 
 class Enemy {
@@ -123,20 +113,17 @@ public:
         Rect_Height_ = Height;
         Rect_Width_ = Width;
     }
+
     virtual void Update(Vector2 ball) {
         float center = Position_.y + Rect_Height_ / 2;
-
-        if (ball.y > center && Position_.y < ScreenHeight - Rect_Height_)
-            Position_.y += Speed_;
-        else if (ball.y < center && Position_.y > 0)
-            Position_.y -= Speed_;
+        if (ball.y > center && Position_.y < ScreenHeight - Rect_Height_) Position_.y += Speed_;
+        else if (ball.y < center && Position_.y > 0) Position_.y -= Speed_;
     }
     virtual ~Enemy() = default;
 
-    void Draw() {
-        DrawRectangle(Position_.x, Position_.y, Rect_Width_, Rect_Height_, GREEN);
-	}
-
+    void Draw() { DrawRectangle(Position_.x, Position_.y, Rect_Width_, Rect_Height_, GREEN); }
+    Vector2 GetPosition() { return Position_; }
+    int GetHeight() { return Rect_Height_; }
     Rectangle GetRec() {
         Rectangle rec;
         rec.x = Position_.x;
@@ -144,20 +131,6 @@ public:
         rec.width = Rect_Width_;
         rec.height = Rect_Height_;
         return rec;
-    }
-
-};
-
-class Enemy_AI_Type_1 : public Enemy {
-public:
-    using Enemy::Enemy;
-
-    void Update(Vector2 ball) override {
-        float center = Position_.y + Rect_Height_ / 2;
-        if (ball.y > center + 15 && Position_.y < ScreenHeight - Rect_Height_)
-            Position_.y += Speed_ * 0.7f;
-        else if (ball.y < center - 15 && Position_.y > 0)
-            Position_.y -= Speed_ * 0.7f;
     }
 };
 
@@ -169,59 +142,62 @@ public:
         float center = Position_.y + Rect_Height_ / 2;
         float screenCenter = ScreenHeight / 2;
 
-        // Ball is on the LEFT side → go to center
         if (ball.x < ScreenWidth / 2) {
-            if (center > screenCenter + 5)
-                Position_.y -= Speed_ * 0.5f;
-            else if (center < screenCenter - 5)
-                Position_.y += Speed_ * 0.5f;
+            if (center > screenCenter + 5) Position_.y -= Speed_ * 0.5f;
+            else if (center < screenCenter - 5) Position_.y += Speed_ * 0.5f;
         }
-        // Ball is on the RIGHT side → track ball
         else {
-            if (ball.y > center + 30 && Position_.y < ScreenHeight - Rect_Height_)
-                Position_.y += Speed_;
-            else if (ball.y < center - 30 && Position_.y > 0)
-                Position_.y -= Speed_;
+            float moveSpeed = Speed_;
+            if (ball.y > center + 30 && Position_.y < ScreenHeight - Rect_Height_) Position_.y += moveSpeed;
+            else if (ball.y < center - 30 && Position_.y > 0) Position_.y -= moveSpeed;
         }
     }
 };
-int main()
-{
-    
-    // Initialization
-    //--------------------------------------------------------------------------------------
+
+int main() {
     bool paused = false;
     Player Player(Vector2(screenWidth / 2 - 450, screenHeight / 2), screenHeight, 20, 80);
-	Ball Ball(Vector2(screenWidth / 2, screenHeight / 2), 10, screenHeight, screenWidth);
+    Ball Ball(Vector2(screenWidth / 2, screenHeight / 2), 10, screenHeight, screenWidth);
     Enemy_AI_Type_2 Enemy(Vector2(screenWidth / 2 + 450, screenHeight / 2), screenHeight, screenWidth, 20, 80);
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - input keys");
+
+    InitWindow(screenWidth, screenHeight, "Pong with angled reflection");
     SetTargetFPS(60);
 
-    // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-		// Update
+    while (!WindowShouldClose()) {
         if (IsKeyPressed(KEY_P)) paused = !paused;
+
         if (!paused) {
+            // Player collision
             if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Player.GetRec())) {
-                Ball.SetDirection();
+                float paddleCenter = Player.GetPosition().y + Player.GetHeight() / 2;
+                float relativeY = Ball.GetPosition().y - paddleCenter;
+                float normalizedY = relativeY / (Player.GetHeight() / 2);
+                float maxAngle = 60 * (PI / 180);
+                float angle = normalizedY * maxAngle;
+                Ball.SetAngle(angle, false);
             }
-            else if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Enemy.GetRec())) {
-                Ball.SetDirection();
+
+            // Enemy collision
+            if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Enemy.GetRec())) {
+                float paddleCenter = Enemy.GetPosition().y + Enemy.GetHeight() / 2;
+                float relativeY = Ball.GetPosition().y - paddleCenter;
+                float normalizedY = relativeY / (Enemy.GetHeight() / 2);
+                float maxAngle = 60 * (PI / 180);
+                float angle = normalizedY * maxAngle;
+                Ball.SetAngle(angle, true); // true → enemy paddle
             }
-                
+
             Player.Update();
-			Enemy.Update(Ball.GetPosition());
+            Enemy.Update(Ball.GetPosition());
             Ball.Update();
         }
-        
 
-		// Draw
+        // Draw
         BeginDrawing();
         ClearBackground(RAYWHITE);
         Player.Draw();
         Enemy.Draw();
-		Ball.Draw();
+        Ball.Draw();
         EndDrawing();
     }
     return 0;
