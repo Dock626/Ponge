@@ -85,7 +85,17 @@ public:
         Current_Speed_.x = Speed_ * cos(angle) * (startRight ? 1 : -1);
         Current_Speed_.y = Speed_ * sin(angle);
     }
+    void Reset(int screenW, int screenH) {
+        Position_ = Vector2{ screenW / 2.0f, screenH / 2.0f };
+        Speed_ = 5.0f;
 
+        // Pick random starting angle
+        float angle = GetRandomFloat(-45.0f, 45.0f) * (PI / 180.0f);
+        bool startRight = GetRandomValue(0, 1) == 1;
+        Current_Speed_.x = Speed_ * cos(angle) * (startRight ? 1 : -1);
+        Current_Speed_.y = Speed_ * sin(angle);
+    }
+	void SetPosition(Vector2 pos) { Position_ = pos; }
     void SetAngle(float angle, bool isRightPaddle) {
         float speed = sqrt(Current_Speed_.x * Current_Speed_.x + Current_Speed_.y * Current_Speed_.y);
         Current_Speed_.x = speed * cos(angle) * (isRightPaddle ? -1 : 1);
@@ -154,7 +164,7 @@ public:
     }
 };
 
-class Enemy_AI_Type_2 : public Enemy {
+class Enemy_AI_Type_1 : public Enemy {
 
 public:
     using Enemy::Enemy;
@@ -183,52 +193,86 @@ public:
 };
 
 int main() {
+    float serveTimer = 0.0f;
+    bool waitingToServe = false;  
     bool paused = false;
+    int playerScore = 0;
+    int enemyScore = 0;
+
     Player Player(Vector2(screenWidth / 2 - 450, screenHeight / 2), screenHeight, 20, 80);
-    Ball Ball(Vector2(screenWidth / 2, screenHeight / 2), 10, screenHeight, screenWidth);
-    Enemy_AI_Type_2 Enemy(Vector2(screenWidth / 2 + 450, screenHeight / 2), screenHeight, screenWidth, 20, 80);
+    Ball Ball(Vector2(screenWidth / 2 , screenHeight / 2), 10, screenHeight, screenWidth);
+    Enemy_AI_Type_1 Enemy(Vector2(screenWidth / 2 + 430, screenHeight / 2), screenHeight, screenWidth, 20, 80);
 
     InitWindow(screenWidth, screenHeight, "Pong");
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
-        if (IsKeyPressed(KEY_P)) paused = !paused;
-
-        if (!paused) {
-            // Player collision
-            if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Player.GetRec())) {
-                float paddleCenter = Player.GetPosition().y + Player.GetHeight() / 2;
-                float relativeY = Ball.GetPosition().y - paddleCenter;
-                float normalizedY = relativeY / (Player.GetHeight() / 2);
-                float maxAngle = 60 * (PI / 180);
-                float angle = normalizedY * maxAngle;
-                Ball.SetAngle(angle, false);
-                Ball.AddSpeed();
+            // Check scoring
+            if (Ball.GetPosition().x < 10) {
+                enemyScore++;
+                waitingToServe = true;
+                serveTimer = 0.0f;
+				Ball.SetPosition(Vector2(screenWidth / 2, screenHeight / 2));
+            }
+            else if (Ball.GetPosition().x > screenWidth - 10) {
+                playerScore++;
+                waitingToServe = true;
+                serveTimer = 0.0f;
+                Ball.SetPosition(Vector2(screenWidth / 2, screenHeight / 2));
             }
 
-            // Enemy collision
-            if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Enemy.GetRec())) {
-                float paddleCenter = Enemy.GetPosition().y + Enemy.GetHeight() / 2;
-                float relativeY = Ball.GetPosition().y - paddleCenter;
-                float normalizedY = relativeY / (Enemy.GetHeight() / 2);
-                float maxAngle = 60 * (PI / 180);
-                float angle = normalizedY * maxAngle;
-                Ball.SetAngle(angle, true);
-                Ball.AddSpeed();
-            }
+            if (!waitingToServe) {
+                // Collisions
+                if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Player.GetRec())) {
+                    float paddleCenter = Player.GetPosition().y + Player.GetHeight() / 2;
+                    float relativeY = Ball.GetPosition().y - paddleCenter;
+                    float normalizedY = relativeY / (Player.GetHeight() / 2);
+                    float maxAngle = 60 * (PI / 180);
+                    float angle = normalizedY * maxAngle;
+                    Ball.SetAngle(angle, false);
+                    Ball.AddSpeed();
+                }
 
-            Player.Update();
-            Enemy.Update(Ball.GetPosition());
-            Ball.Update();
-        }
+                if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Enemy.GetRec())) {
+                    float paddleCenter = Enemy.GetPosition().y + Enemy.GetHeight() / 2;
+                    float relativeY = Ball.GetPosition().y - paddleCenter;
+                    float normalizedY = relativeY / (Enemy.GetHeight() / 2);
+                    float maxAngle = 60 * (PI / 180);
+                    float angle = normalizedY * maxAngle;
+                    Ball.SetAngle(angle, true);
+                    Ball.AddSpeed();
+                }
+
+                // Normal updates
+                
+                Ball.Update();
+            }
+            else {
+                // Serve pause
+                serveTimer += GetFrameTime();
+                if (serveTimer >= 2.0f) {
+                    Ball.Reset(screenWidth, screenHeight);
+                    waitingToServe = false;
+                }
+            }
+        
+        Player.Update();
+        Enemy.Update(Ball.GetPosition());
 
         // Draw
         BeginDrawing();
         ClearBackground(RAYWHITE);
+
+        DrawText(TextFormat("%i", playerScore), screenWidth / 4, 20, 40, BLUE);
+        DrawText(TextFormat("%i", enemyScore), screenWidth * 3 / 4, 20, 40, GREEN);
+
         Player.Draw();
         Enemy.Draw();
         Ball.Draw();
+
         EndDrawing();
     }
+
+    CloseWindow();
     return 0;
 }
