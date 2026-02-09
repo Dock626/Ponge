@@ -106,8 +106,9 @@ public:
         return Radius_;
 	}
 };
+
 class Enemy {
-private:
+protected:
     const float Speed_ = 5.0f;
     Vector2 Position_;
     int ScreenHeight;
@@ -122,14 +123,16 @@ public:
         Rect_Height_ = Height;
         Rect_Width_ = Width;
     }
-    void Update(int ballY) {
+    virtual void Update(Vector2 ball) {
         float center = Position_.y + Rect_Height_ / 2;
 
-        if (ballY > center && Position_.y < ScreenHeight - Rect_Height_)
+        if (ball.y > center && Position_.y < ScreenHeight - Rect_Height_)
             Position_.y += Speed_;
-        else if (ballY < center && Position_.y > 0)
+        else if (ball.y < center && Position_.y > 0)
             Position_.y -= Speed_;
     }
+    virtual ~Enemy() = default;
+
     void Draw() {
         DrawRectangle(Position_.x, Position_.y, Rect_Width_, Rect_Height_, GREEN);
 	}
@@ -144,6 +147,44 @@ public:
     }
 
 };
+
+class Enemy_AI_Type_1 : public Enemy {
+public:
+    using Enemy::Enemy;
+
+    void Update(Vector2 ball) override {
+        float center = Position_.y + Rect_Height_ / 2;
+        if (ball.y > center + 15 && Position_.y < ScreenHeight - Rect_Height_)
+            Position_.y += Speed_ * 0.7f;
+        else if (ball.y < center - 15 && Position_.y > 0)
+            Position_.y -= Speed_ * 0.7f;
+    }
+};
+
+class Enemy_AI_Type_2 : public Enemy {
+public:
+    using Enemy::Enemy;
+
+    void Update(Vector2 ball) override {
+        float center = Position_.y + Rect_Height_ / 2;
+        float screenCenter = ScreenHeight / 2;
+
+        // Ball is on the LEFT side → go to center
+        if (ball.x < ScreenWidth / 2) {
+            if (center > screenCenter + 5)
+                Position_.y -= Speed_ * 0.5f;
+            else if (center < screenCenter - 5)
+                Position_.y += Speed_ * 0.5f;
+        }
+        // Ball is on the RIGHT side → track ball
+        else {
+            if (ball.y > center + 30 && Position_.y < ScreenHeight - Rect_Height_)
+                Position_.y += Speed_;
+            else if (ball.y < center - 30 && Position_.y > 0)
+                Position_.y -= Speed_;
+        }
+    }
+};
 int main()
 {
     
@@ -152,7 +193,7 @@ int main()
     bool paused = false;
     Player Player(Vector2(screenWidth / 2 - 450, screenHeight / 2), screenHeight, 20, 80);
 	Ball Ball(Vector2(screenWidth / 2, screenHeight / 2), 10, screenHeight, screenWidth);
-	Enemy Enemy(Vector2(screenWidth / 2 + 450, screenHeight / 2), screenHeight, screenWidth, 20, 80);
+    Enemy_AI_Type_2 Enemy(Vector2(screenWidth / 2 + 450, screenHeight / 2), screenHeight, screenWidth, 20, 80);
     InitWindow(screenWidth, screenHeight, "raylib [core] example - input keys");
     SetTargetFPS(60);
 
@@ -164,15 +205,13 @@ int main()
         if (!paused) {
             if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Player.GetRec())) {
                 Ball.SetDirection();
-				Ball.AddSpeed();
             }
             else if (CheckCollisionCircleRec(Ball.GetPosition(), Ball.GetRadius(), Enemy.GetRec())) {
                 Ball.SetDirection();
-				Ball.AddSpeed();
             }
                 
             Player.Update();
-			Enemy.Update(Ball.GetPosition().y);
+			Enemy.Update(Ball.GetPosition());
             Ball.Update();
         }
         
