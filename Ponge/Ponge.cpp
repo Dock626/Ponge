@@ -4,7 +4,7 @@
 #include "Ponge.h"
 #include "Player.h"
 #include "Ball.h"
-#include "EnemyAIType1.h"
+#include "Enemy_AI_1.h"
 #include <cmath>
 
 using namespace std;

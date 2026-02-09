@@ -1,4 +1,4 @@
-﻿#include "EnemyAIType1.h"
+﻿#include "Enemy_AI_1.h"
 #include <cmath>
 
 void Enemy_AI_Type_1::Update(Vector2 ball) {

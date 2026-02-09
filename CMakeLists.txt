@@ -7,7 +7,7 @@ project(
         LANGUAGES C CXX
 )   
 
-add_executable(example Ponge/Ponge.cpp)
+add_executable(example Ponge/Ponge.cpp Ponge/Player.cpp Ponge/Enemy_AI_1.cpp Ponge/Enemy.cpp Ponge/Ball.cpp)
 
 target_compile_features(example PUBLIC cxx_std_23)
 
